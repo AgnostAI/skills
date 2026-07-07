@@ -39,10 +39,10 @@ function classify() {
       fail(`monorepo root detected; rerun with --dir <target>. candidates: ${candidates.join(", ")}`);
     }
     const deps = dependencyMap(pkg);
-    if (has(deps, "@modelcontextprotocol/sdk") && strategy !== "otel") {
-      return rec("mcp-ts", "node", "ingest", "MCP server (TypeScript) via the `agnost` SDK");
-    }
     if (strategy !== "otel") {
+      if (has(deps, "@modelcontextprotocol/sdk") && !hasNodeAppSignals(deps)) {
+        return rec("mcp-ts", "node", "ingest", "Dedicated MCP server (TypeScript) via the `agnost` SDK");
+      }
       return rec("conversation-ts", "node", "ingest", "Generic Node/TS app via the `agnostai` Conversation SDK");
     }
     if (has(deps, "@mastra/core", "@mastra/core/agent", "mastra")) {
@@ -131,6 +131,33 @@ function dependencyMap(pkg) {
     ...(pkg.optionalDependencies || {}),
     ...(pkg.peerDependencies || {}),
   };
+}
+
+function hasNodeAppSignals(deps) {
+  return has(
+    deps,
+    "openai",
+    "@openai/agents",
+    "@anthropic-ai/sdk",
+    "anthropic",
+    "ai",
+    "@ai-sdk/openai",
+    "@ai-sdk/anthropic",
+    "@ai-sdk/provider",
+    "langchain",
+    "@langchain",
+    "@mastra/core",
+    "@mastra/core/agent",
+    "mastra",
+    "spectrum-ts",
+    "@spectrum-ts/core",
+    "next",
+    "react",
+    "express",
+    "fastify",
+    "hono",
+    "@nestjs/core"
+  );
 }
 
 function pythonProject(root) {

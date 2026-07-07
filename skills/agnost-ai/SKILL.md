@@ -37,6 +37,17 @@ Prefer SDK/MCP integration:
 - Python MCP/FastMCP server: install `agnost-mcp`, call `track(server, org_id,
   config(...))` after tool registration and before `run()`.
 
+If a Node/TypeScript project contains MCP code but is not solely an MCP server
+(for example it also has app, agent, model, OpenAI, Vercel AI SDK, LangChain,
+Mastra, Next/React, or API-server code), prefer the TypeScript conversation SDK
+route (`agnostai`) and instrument the real AI turn. Use the MCP wrapper route
+only when the package's main surface is a dedicated MCP server.
+
+Keep input and output capture enabled by default. For options named
+`disableInput`/`disableOutput` (or Python `disable_input`/`disable_output`),
+`false` means capture is on. Set them to `true` only when the user explicitly
+asks to redact inputs/outputs or the target app's privacy requirements demand it.
+
 Use OTel only when the user explicitly requests OTel or refuses Agnost SDK/MCP
 packages. Supported recipe targets include Vercel AI SDK, Mastra, Spectrum TS,
 LangChain, OpenAI, and other already-instrumented OTel apps.

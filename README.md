@@ -55,7 +55,15 @@ Prefer these in order:
 | Spectrum TS | OTel dependency/env plus app-level message-loop span recipe |
 | LangChain | LangSmith/OTLP dependency/env |
 
+When a TypeScript package contains MCP code and regular app/agent/model code,
+prefer the TypeScript conversation app path. Reserve the MCP wrapper path for
+packages whose main surface is a dedicated MCP server.
+
 Generic app rewrites stay recipe-driven until the real handler shape is known.
+
+Input and output capture is on by default. Negative options such as
+`disableInput` / `disableOutput` or `disable_input` / `disable_output` should
+stay false or omitted unless the user explicitly wants redaction.
 
 ## Env Output
 
@@ -81,3 +89,9 @@ TEST-REPORT.md
 ```
 
 Scripts use Node >= 18 and no runtime dependencies.
+
+Routing-only tests can be run without the local dev stack:
+
+```bash
+node test/detect-routing.mjs
+```

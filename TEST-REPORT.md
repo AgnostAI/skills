@@ -19,6 +19,7 @@ The public skill must prove the agent workflow:
 Local verification should use:
 
 ```bash
+node test/detect-routing.mjs
 bash test/run-sandboxes.sh
 ```
 
@@ -26,6 +27,7 @@ bash test/run-sandboxes.sh
 
 | Sandbox | Expected path | Required proof |
 | --- | --- | --- |
+| `detect-routing` | routing heuristics | mixed MCP + TypeScript app dependency set chooses `conversation-ts`; dedicated MCP-only package still chooses `mcp-ts` |
 | `conversation-ts` | `agnostai` SDK/env | package/env changed and a local `agnostai` app turn created events |
 | `conversation-ts-sdk-strategy` | default SDK path on an OpenAI TS package | `agnostai` chosen instead of OpenAI OTel |
 | `conversation-py` | `agnost` SDK/env | Python dependency/env changed and a local `agnost` app turn created events |

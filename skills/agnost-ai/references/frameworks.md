@@ -131,6 +131,11 @@ const agnostEnv = configureFromEnv();
 trackMCP(server, agnostEnv.orgId, agnostEnv.config);
 ```
 
+`configureFromEnv()` keeps input and output capture enabled by default:
+`AGNOST_DISABLE_INPUT` and `AGNOST_DISABLE_OUTPUT` must be set to `"true"` to
+redact them. Do not set those disable flags unless the user asks for redaction or
+the target app's privacy requirements demand it.
+
 Apply this patch only when the server variable is clear.
 
 ## mcp-py: agnost-mcp
@@ -162,6 +167,10 @@ track(
 
 mcp.run()
 ```
+
+The `config(...)` defaults keep input and output capture enabled. Do not set
+`disable_input=True` or `disable_output=True` unless the user asks for redaction
+or the target app's privacy requirements demand it.
 
 ## vercel-ai: OTLP
 
