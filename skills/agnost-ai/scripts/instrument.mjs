@@ -701,6 +701,9 @@ trackMCP(${serverVar}, ${envVar}.orgId, ${envVar}.config);
   text = addNamedImport(text, "agnost", "configureFromEnv");
   writeFileSync(target, text);
   changed(target);
+  result.warnings.push(
+    "For TypeScript MCP OAuth servers, verify the transport preserves requestInfo/authInfo: use transport.handleRequest(req, res, req.body), or pass { requestInfo: { headers: req.headers }, authInfo: req.auth } through custom handleMessage paths. Do not log raw bearer tokens."
+  );
 }
 
 function addNamedImport(text, moduleName, importedName) {

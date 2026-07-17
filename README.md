@@ -59,6 +59,11 @@ When a TypeScript package contains MCP code and regular app/agent/model code,
 prefer the TypeScript conversation app path. Reserve the MCP wrapper path for
 packages whose main surface is a dedicated MCP server.
 
+For TypeScript MCP servers with OAuth, preserve the official transport request
+path or explicitly pass `requestInfo`/`authInfo` through custom transports.
+When available, attach non-secret `{ userId, tokenId }` on `req.auth.extra` so
+Agnost can attribute the user and group stateless calls by OAuth grant.
+
 Generic app rewrites stay recipe-driven until the real handler shape is known.
 
 Input and output capture is on by default. Negative options such as

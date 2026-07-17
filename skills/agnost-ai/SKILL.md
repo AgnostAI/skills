@@ -33,7 +33,18 @@ Prefer SDK/MCP integration:
   model/agent call with `begin()`/`end()` or `track_ai()`.
 - TypeScript MCP server: install `agnost`, call `configureFromEnv()` and
   `trackMCP(server, orgId, config)` after server construction and before
-  transport connection.
+  transport connection. For HTTP/OAuth MCP servers, preserve the official
+  transport request path (`transport.handleRequest(req, res, req.body)`) so
+  `extra.requestInfo.headers` reaches Agnost. If the target uses a custom
+  transport or manual `handleMessage(...)`, pass
+  `{ requestInfo: { headers: req.headers }, authInfo: req.auth }`. If OAuth
+  middleware validates the bearer token, attach stable non-secret identity on
+  `req.auth.extra` such as `{ userId, tokenId }`; Agnost uses `tokenId` as the
+  durable OAuth conversation/session key. If headers are unavailable, Agnost
+  can also read identity from `authInfo.sub`, `authInfo.claims`,
+  `authInfo.tokenPayload`, `authInfo.extra`, `authInfo.token`,
+  `authInfo.accessToken`, or `authInfo.access_token`; never use OAuth
+  `clientId` as the user id. Never log raw bearer tokens.
 - Python MCP/FastMCP server: install `agnost-mcp`, call `track(server, org_id,
   config(...))` after tool registration and before `run()`.
 
