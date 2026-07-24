@@ -217,6 +217,11 @@ The `config(...)` defaults keep input and output capture enabled. Do not set
 `disable_input=True` or `disable_output=True` unless the user asks for redaction
 or the target app's privacy requirements demand it.
 
+The Python wrapper supports stdio, SSE, and stateful/stateless Streamable HTTP.
+Keep all tracked server instances in one process on the same org ID and config.
+Without a custom sync/async `identify`, it resolves bearer or validated MCP auth
+context and never forwards raw credentials.
+
 ## vercel-ai: OTLP
 
 Official recipe: https://docs.agnost.ai/otel-vercel-ai
