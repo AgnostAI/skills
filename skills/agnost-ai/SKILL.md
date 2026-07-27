@@ -47,9 +47,11 @@ Prefer SDK/MCP integration:
   `clientId` as the user id. Never log raw bearer tokens.
 - Python MCP/FastMCP server: install `agnost-mcp`, call `track(server, org_id,
   config(...))` after tool registration and before `run()`. The SDK supports
-  stdio, SSE, and stateful/stateless Streamable HTTP. Reuse one org ID per
-  process; built-in identity uses bearer or validated MCP auth context without
-  forwarding raw credentials.
+  stdio, SSE, and stateful/stateless Streamable HTTP. Multiple tracked server
+  instances in one process must use the same org ID and config. Without a
+  custom sync/async `identify`, built-in identity uses bearer or validated MCP
+  auth context without forwarding raw credentials, and identity is cached per
+  session key.
 
 If a Node/TypeScript project contains MCP code but is not solely an MCP server
 (for example it also has app, agent, model, OpenAI, Vercel AI SDK, LangChain,

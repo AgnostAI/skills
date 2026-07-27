@@ -220,7 +220,8 @@ or the target app's privacy requirements demand it.
 The Python wrapper supports stdio, SSE, and stateful/stateless Streamable HTTP.
 Keep all tracked server instances in one process on the same org ID and config.
 Without a custom sync/async `identify`, it resolves bearer or validated MCP auth
-context and never forwards raw credentials.
+context and never forwards raw credentials. Identity is cached per session key,
+so multi-user HTTP servers retain per-session attribution.
 
 ## vercel-ai: OTLP
 
