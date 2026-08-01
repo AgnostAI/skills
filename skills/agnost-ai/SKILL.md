@@ -94,6 +94,17 @@ requires migrating to a supported Vercel AI SDK call shape or using SDK
 instrumentation. Do not generate custom OTLP fetches, synthetic spans, or
 wrapper functions.
 
+## Backfill existing data
+
+If the user has historical conversations or agent activity, offer to backfill
+it before or alongside live instrumentation. Preserve original timestamps and
+stable conversation/event relationships, mapping source identifiers to the
+required UUIDs. Create each conversation with the
+[Capture Session API](https://docs.agnost.ai/capture-session), then send its
+turn-pairs and tool calls with the
+[Capture Event API](https://docs.agnost.ai/capture-event). Follow the API
+reference for event hierarchy, input/output shape, and historical timestamps.
+
 ## Script helpers
 
 Scripts are helpers for agents and CLI tools, not the product surface.
