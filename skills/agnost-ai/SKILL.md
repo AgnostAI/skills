@@ -84,6 +84,7 @@ Open only the matching section from `references/frameworks.md`:
 - `#mastra-otlp`
 - `#spectrum-ts-app-level-otel-spans`
 - `#langchain-langsmith-otel-mode`
+- `#custom-otel-spans`
 
 For `vercel-ai`, read `references/frameworks.md#vercel-ai-otlp` before editing.
 Use the official Agnost recipe only: OTel exporter setup plus
