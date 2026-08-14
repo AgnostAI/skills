@@ -65,7 +65,7 @@ provider = TracerProvider()
 provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter()))
 set_tracer_provider(provider, metadata={
     "session.id": conversation_id,
-    "enduser.id": user_id,
+    "user.id": user_id,
     "conversation.channel": "voice",
 })
 ```
@@ -83,7 +83,7 @@ const provider = new NodeTracerProvider({
 });
 provider.register();
 telemetry.setTracerProvider(provider, {
-  metadata: { "session.id": conversationId, "enduser.id": userId },
+  metadata: { "session.id": conversationId, "user.id": userId },
   registerSpanProcessor: (processor) => fanout.add(processor),
 });
 ```
@@ -91,7 +91,7 @@ telemetry.setTracerProvider(provider, {
 Use standard metadata:
 
 - `session.id` for the conversation.
-- `enduser.id` or `user.id` for the customer.
+- `user.id` for the customer.
 - `user.*` for user metadata.
 - `conversation.*` for conversation metadata.
 

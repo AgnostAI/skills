@@ -155,7 +155,7 @@ For `livekit-ts` or `livekit-py`, read
 `references/frameworks.md#livekit-agents-native-otlp` before editing. Preserve
 LiveKit's native spans: configure a standard OTel batch exporter and call the
 framework tracer-provider hook before `AgentSession.start()`. Use `session.id`,
-`enduser.id`/`user.id`, `user.*`, and `conversation.*` metadata. Do not add a
+`user.id`, `user.*`, and `conversation.*` metadata. Do not add a
 custom span wrapper, synthesize OTLP payloads, or use LiveKit room webhooks as a
 substitute for agent traces.
 

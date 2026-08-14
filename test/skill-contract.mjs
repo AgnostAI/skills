@@ -36,3 +36,15 @@ test("OTel validation covers Agnost conversation fidelity", () => {
   assert.match(skill, /all (?:the )?(?:events|turns)/i);
   assert.match(skill, /tool spans/i);
 });
+
+test("LiveKit guidance maps users with user.id", () => {
+  const livekitReference = frameworks.match(
+    /## livekit agents: native OTLP[\s\S]*?(?=\n## )/,
+  )?.[0];
+
+  assert.ok(livekitReference, "missing LiveKit reference section");
+  assert.match(livekitReference, /"user\.id": user_id/);
+  assert.match(livekitReference, /"user\.id": userId/);
+  assert.doesNotMatch(livekitReference, /enduser\.id/);
+  assert.match(skill, /For `livekit-ts` or `livekit-py`[\s\S]*?Use `session\.id`,\n`user\.id`/);
+});
