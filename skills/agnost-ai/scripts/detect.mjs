@@ -39,49 +39,40 @@ function classify() {
       fail(`monorepo root detected; rerun with --dir <target>. candidates: ${candidates.join(", ")}`);
     }
     const deps = dependencyMap(pkg);
-    if (strategy !== "otel") {
-      if (has(deps, "@modelcontextprotocol/sdk") && !hasNodeAppSignals(deps)) {
-        return rec("mcp-ts", "node", "ingest", "Dedicated MCP server (TypeScript) via the `agnost` SDK");
-      }
-      return rec("conversation-ts", "node", "ingest", "Generic Node/TS app via the `agnostai` Conversation SDK");
-    }
-    if (has(deps, "@mastra/core", "@mastra/core/agent", "mastra")) {
-      return rec("mastra", "node", "otel", "Mastra agent framework (OTLP traces → Agnost collector)");
-    }
-    if (has(deps, "spectrum-ts", "@spectrum-ts/core")) {
-      return rec("spectrum-ts", "node", "otel", "Spectrum TS app-level OTel spans → Agnost collector");
-    }
-    if (has(deps, "langchain", "@langchain")) {
-      return rec("langchain-ts", "node", "otel", "LangChain JS/TS via LangSmith OTel mode → Agnost collector");
-    }
-    if (has(deps, "ai", "@ai-sdk/openai", "@ai-sdk/anthropic", "@ai-sdk/provider")) {
-      return rec("vercel-ai", "node", "otel", "Vercel AI SDK (experimental_telemetry → OTLP → Agnost collector)");
-    }
-    if (has(deps, "openai", "@openai/agents")) {
-      return rec("openai-ts", "node", "otel", "OpenAI SDK via OpenInference OTel → Agnost collector");
-    }
+    const otelRoute = nodeOtelRoute(deps);
     if (strategy === "otel") {
+      if (otelRoute) return otelRoute;
       fail("no supported OTel framework found in package.json; rerun with --strategy sdk to use the Agnost SDK path");
     }
+    if (strategy === "auto" && otelRoute && hasNodeOtelDependencies(deps)) {
+      return {
+        ...otelRoute,
+        reason: `Existing OTel dependencies detected; inspect exporter config and validate a real trace. ${otelRoute.reason}`,
+      };
+    }
+    if (has(deps, "@modelcontextprotocol/sdk") && !hasNodeAppSignals(deps)) {
+      return rec("mcp-ts", "node", "ingest", "Dedicated MCP server (TypeScript) via the `agnost` SDK");
+    }
+    return rec("conversation-ts", "node", "ingest", "Generic Node/TS app via the `agnostai` Conversation SDK");
   }
 
   const py = pythonProject(dir);
   if (py) {
-    if (strategy !== "otel") {
-      if (hasPy(py, "fastmcp", "mcp")) {
-        return rec("mcp-py", "python", "ingest", "Python MCP server via the `agnost-mcp` SDK");
-      }
-      return rec("conversation-py", "python", "ingest", "Generic Python app via the `agnost` Conversation SDK");
-    }
-    if (hasPy(py, "langchain", "langgraph")) {
-      return rec("langchain-py", "python", "otel", "LangChain Python via LangSmith OTel mode → Agnost collector");
-    }
-    if (hasPy(py, "openai", "openai-agents")) {
-      return rec("openai-py", "python", "otel", "OpenAI Python SDK via OpenInference OTel → Agnost collector");
-    }
+    const otelRoute = pythonOtelRoute(py);
     if (strategy === "otel") {
+      if (otelRoute) return otelRoute;
       fail("no supported Python OTel framework found; rerun with --strategy sdk to use the Agnost SDK path");
     }
+    if (strategy === "auto" && otelRoute && hasPythonOtelDependencies(py)) {
+      return {
+        ...otelRoute,
+        reason: `Existing OTel dependencies detected; inspect exporter config and validate a real trace. ${otelRoute.reason}`,
+      };
+    }
+    if (hasPy(py, "fastmcp", "mcp")) {
+      return rec("mcp-py", "python", "ingest", "Python MCP server via the `agnost-mcp` SDK");
+    }
+    return rec("conversation-py", "python", "ingest", "Generic Python app via the `agnost` Conversation SDK");
   }
 
   fail("no supported Node/TypeScript or Python project found");
@@ -96,7 +87,59 @@ function rec(framework, language, transport, reason) {
     reason,
     envVar: transport === "otel" ? "AGNOST_OTEL_URL" : "AGNOST_ENDPOINT",
     orgHeader: transport === "otel" ? "X-Agnost-Org-ID" : "X-Org-Id",
+    requiresTraceValidation: transport === "otel",
   };
+}
+
+function nodeOtelRoute(deps) {
+  if (has(deps, "@livekit/agents")) {
+    return rec("livekit-ts", "node", "otel", "LiveKit Agents native traces → OTLP → Agnost collector");
+  }
+  if (has(deps, "@mastra/core", "@mastra/core/agent", "mastra")) {
+    return rec("mastra", "node", "otel", "Mastra agent framework (OTLP traces → Agnost collector)");
+  }
+  if (has(deps, "spectrum-ts", "@spectrum-ts/core")) {
+    return rec("spectrum-ts", "node", "otel", "Spectrum TS app-level OTel spans → Agnost collector");
+  }
+  if (has(deps, "langchain", "@langchain")) {
+    return rec("langchain-ts", "node", "otel", "LangChain JS/TS via LangSmith OTel mode → Agnost collector");
+  }
+  if (has(deps, "ai", "@ai-sdk/openai", "@ai-sdk/anthropic", "@ai-sdk/provider")) {
+    return rec("vercel-ai", "node", "otel", "Vercel AI SDK (experimental_telemetry → OTLP → Agnost collector)");
+  }
+  if (has(deps, "openai", "@openai/agents")) {
+    return rec("openai-ts", "node", "otel", "OpenAI SDK via OpenInference OTel → Agnost collector");
+  }
+  return null;
+}
+
+function hasNodeOtelDependencies(deps) {
+  return has(
+    deps,
+    "@opentelemetry",
+    "@arizeai/openinference-core",
+    "@arizeai/openinference-instrumentation-openai",
+    "@vercel/otel",
+    "@mastra/observability",
+    "@mastra/otel-exporter"
+  );
+}
+
+function pythonOtelRoute(py) {
+  if (hasPy(py, "livekit-agents")) {
+    return rec("livekit-py", "python", "otel", "LiveKit Agents native traces → OTLP → Agnost collector");
+  }
+  if (hasPy(py, "langchain", "langgraph")) {
+    return rec("langchain-py", "python", "otel", "LangChain Python via LangSmith OTel mode → Agnost collector");
+  }
+  if (hasPy(py, "openai", "openai-agents")) {
+    return rec("openai-py", "python", "otel", "OpenAI Python SDK via OpenInference OTel → Agnost collector");
+  }
+  return null;
+}
+
+function hasPythonOtelDependencies(py) {
+  return /opentelemetry|openinference-instrumentation|langsmith\s*\[\s*otel\s*\]/i.test(py);
 }
 
 function isWorkspaceRoot(pkg, root) {
@@ -149,6 +192,7 @@ function hasNodeAppSignals(deps) {
     "@mastra/core",
     "@mastra/core/agent",
     "mastra",
+    "@livekit/agents",
     "spectrum-ts",
     "@spectrum-ts/core",
     "next",

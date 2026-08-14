@@ -7,9 +7,9 @@ customer apps.
 
 Use the `skills/agnost-ai/` directory as the installed agent skill. An AI agent
 or CLI tool loads `skills/agnost-ai/SKILL.md`, asks for missing project facts,
-chooses SDK/MCP first, uses OTel only when requested, applies the minimal
-integration, and verifies with one real customer-app interaction after
-restart/deploy.
+inspects existing telemetry, preserves a supported OTel path when its real spans
+are usable, otherwise chooses the matching SDK/MCP route, and verifies the full
+conversation model with real customer-app interactions after restart/deploy.
 
 Do not make an npm package, global binary, or one-shot runner the product
 surface. Bundled scripts are helpers after the route is chosen.
@@ -41,7 +41,9 @@ customer chat, agent action, or MCP tool call after restart/deploy.
 
 ## Supported Routes
 
-Prefer these in order:
+Inspect an existing OTel path before adding another integration. When it emits a
+supported span family, keep it and fill only proven identity, hierarchy,
+attribute, or metadata gaps. Otherwise use the matching SDK/MCP route below.
 
 | Target | Path |
 | --- | --- |
@@ -49,15 +51,17 @@ Prefer these in order:
 | Python conversation app | `agnost` SDK dependency/env plus real handler wrapping |
 | TypeScript MCP server | `agnost` MCP wrapper dependency/env plus server patch |
 | Python MCP/FastMCP server | `agnost-mcp` wrapper dependency/env plus server patch |
+| LiveKit Agents (Python or TypeScript) | Native LiveKit traces through a standard OTel batch exporter |
 | Vercel AI SDK | Official Agnost OTel exporter setup plus modern AI SDK telemetry option |
-| OpenAI SDK | OpenInference + OTLP dependency/env only when OTel is requested |
+| OpenAI SDK | Existing or selected OpenInference + OTLP dependency/env |
 | Mastra | OTel dependency/env plus startup observability config |
 | Spectrum TS | OTel dependency/env plus app-level message-loop span recipe |
 | LangChain | LangSmith/OTLP dependency/env |
 
 When a TypeScript package contains MCP code and regular app/agent/model code,
-prefer the TypeScript conversation app path. Reserve the MCP wrapper path for
-packages whose main surface is a dedicated MCP server.
+preserve its supported existing OTel path or use the TypeScript conversation
+app path. Reserve the MCP wrapper path for packages whose main surface is a
+dedicated MCP server.
 
 For TypeScript MCP servers with OAuth, preserve the official transport request
 path or explicitly pass `requestInfo`/`authInfo` through custom transports.
@@ -95,8 +99,9 @@ TEST-REPORT.md
 
 Scripts use Node >= 18 and no runtime dependencies.
 
-Routing-only tests can be run without the local dev stack:
+Routing, skill-contract, and LiveKit instrumentation tests can be run without
+the local dev stack:
 
 ```bash
-node test/detect-routing.mjs
+node --test test/detect-routing.mjs test/skill-contract.mjs test/livekit-instrumentation.mjs
 ```

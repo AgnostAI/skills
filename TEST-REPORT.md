@@ -10,16 +10,19 @@ The public skill must prove the agent workflow:
 1. Agent has the public skills checkout or installed skill directory.
 2. Agent asks for org id, target app, install permission, verification target,
    real AI entrypoint, and restart/deploy method.
-3. Agent uses SDK/MCP first, OTel only when requested or packages are refused.
-4. User restarts/deploys and performs one real chat, agent action, or MCP tool
-   call.
-5. The real interaction is visible in Agnost dashboard raw logs, conversations,
-   tools, or traces.
+3. Agent inspects existing telemetry and preserves a supported OTel path when a
+   real trace has usable identity, conversation, hierarchy, and metadata.
+4. Agent falls back to the matching SDK/MCP route when existing OTel cannot
+   produce a faithful Agnost conversation model.
+5. User restarts/deploys and performs real interactions that exercise a new
+   conversation and an internal tool call.
+6. The resulting user, conversations, turns/events, tool hierarchy, token and
+   framework attributes, and custom metadata are correct in Agnost.
 
 Local verification should use:
 
 ```bash
-node test/detect-routing.mjs
+node --test test/detect-routing.mjs test/skill-contract.mjs test/livekit-instrumentation.mjs
 bash test/run-sandboxes.sh
 ```
 
@@ -27,13 +30,15 @@ bash test/run-sandboxes.sh
 
 | Sandbox | Expected path | Required proof |
 | --- | --- | --- |
-| `detect-routing` | routing heuristics | mixed MCP + TypeScript app dependency set chooses `conversation-ts`; dedicated MCP-only package still chooses `mcp-ts` |
+| `detect-routing` | routing heuristics | supported Node/Python apps with existing OTel dependencies keep OTel in `auto`; explicit `sdk` still wins; dedicated MCP-only packages still choose MCP |
+| `skill-contract` | agent instructions | OTel routing requires real trace validation for user/conversation mapping, turns, child tools, GenAI/framework attributes, and custom metadata scopes |
 | `conversation-ts` | `agnostai` SDK/env | package/env changed and a local `agnostai` app turn created events |
 | `conversation-ts-sdk-strategy` | default SDK path on an OpenAI TS package | `agnostai` chosen instead of OpenAI OTel |
 | `conversation-py` | `agnost` SDK/env | Python dependency/env changed and a local `agnost` app turn created events |
 | `conversation-py-sdk-strategy` | default SDK path on a Poetry OpenAI Python package | `agnost` chosen instead of OpenAI OTel |
 | `mcp-ts` | `agnost` MCP wrapper | package/env/source changed and MCP event |
 | `mcp-py` | `agnost-mcp` SDK/env | Python dependency/env changed and FastMCP recipe available |
+| `livekit-instrumentation` | explicit `--strategy otel` for Python and TypeScript LiveKit Agents | LiveKit detection, current OTel dependencies/env, native setup reference, and idempotent rerun |
 | `vercel-ai` | explicit `--strategy otel` env/deps plus known call telemetry | package/env/source changed and OTLP event |
 | `vercel-ai-next-startup` | explicit `--strategy otel` Next.js OTLP startup hook | `instrumentation.ts` created and setup OTLP event |
 | `openai-ts` | explicit `--strategy otel` OpenInference/OTLP env/deps | package/env changed and a local OpenAI SDK call to a fake OpenAI server emitted OpenInference OTLP |

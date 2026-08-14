@@ -10,6 +10,7 @@
 //   - openai-ts/openai-py: add OpenInference OTLP dependency/env setup.
 //   - spectrum-ts: add OTLP dependency/env setup; message-loop span wiring remains recipe-driven.
 //   - mastra: add OTLP dependency/env setup and configure known Mastra startup objects.
+//   - livekit-ts/livekit-py: add native LiveKit OTLP dependency/env setup.
 //   - langchain-ts/langchain-py: add OTLP dependency/env setup; source wiring remains recipe-driven.
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
@@ -101,6 +102,19 @@ if (framework === "mcp-ts") {
     patchVercelNextStartup();
     result.warnings.push("vercel-ai dependency/env added; no uninstrumented generateText/streamText/generateObject call found");
   }
+} else if (framework === "livekit-ts") {
+  setupOtelTypeScript({
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.220.0",
+    "@opentelemetry/sdk-trace-node": "^2.8.0",
+  });
+  result.warnings.push("LiveKit OTel deps/env added; call telemetry.setTracerProvider(...) before AgentSession.start() using the LiveKit reference recipe");
+} else if (framework === "livekit-py") {
+  setupOtelPython([
+    "opentelemetry-sdk",
+    "opentelemetry-exporter-otlp-proto-http",
+  ]);
+  result.warnings.push("LiveKit OTel deps/env added; call set_tracer_provider(...) before AgentSession.start() using the LiveKit reference recipe");
 } else if (framework === "openai-ts") {
   setupOtelTypeScript({
     "@arizeai/openinference-instrumentation-openai": openInferenceOpenAiVersion(),
@@ -903,6 +917,8 @@ function referenceFor(name) {
     "mcp-ts": "references/frameworks.md#mcp-ts-agnost",
     "mcp-py": "references/frameworks.md#mcp-py-agnost-mcp",
     "vercel-ai": "references/frameworks.md#vercel-ai-otlp",
+    "livekit-ts": "references/frameworks.md#livekit-agents-native-otlp",
+    "livekit-py": "references/frameworks.md#livekit-agents-native-otlp",
     "openai-ts": "references/frameworks.md#openai-openinference-otlp",
     "openai-py": "references/frameworks.md#openai-openinference-otlp",
     "mastra": "references/frameworks.md#mastra-otlp",
