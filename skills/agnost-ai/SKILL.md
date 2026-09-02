@@ -35,6 +35,9 @@ Inspect existing telemetry before choosing an integration:
 - When an existing OpenTelemetry path emits supported spans, preserve it and
   route those spans to Agnost. Do not install a Conversation SDK merely because
   the app is a general TypeScript or Python application.
+- Retell does not expose a documented OTLP export. For Retell agents, configure
+  the `call_analyzed` webhook route in `references/frameworks.md`; do not use
+  Live Monitoring, Analytics, or `transcript_updated` as a trace substitute.
 - Treat automatic OTel detection as a candidate, not proof. Inspect or trigger
   one real interaction and validate the resulting trace with the checklist
   below before declaring that route usable.
@@ -136,6 +139,7 @@ Open only the matching section from `references/frameworks.md`:
 - `#mcp-py-agnost-mcp`
 - `#vercel-ai-otlp`
 - `#livekit-agents-native-otlp`
+- `#retell-call-analyzed-webhook`
 - `#openai-openinference-otlp`
 - `#mastra-otlp`
 - `#spectrum-ts-app-level-otel-spans`
@@ -158,6 +162,11 @@ framework tracer-provider hook before `AgentSession.start()`. Use `session.id`,
 `user.id`, `user.*`, and `conversation.*` metadata. Do not add a
 custom span wrapper, synthesize OTLP payloads, or use LiveKit room webhooks as a
 substitute for agent traces.
+
+For Retell, read `references/frameworks.md#retell-call-analyzed-webhook`.
+Configure the direct Agnost webhook URL with the real organization UUID and
+enable `call_analyzed`. Do not add an OTel exporter or ingest incremental
+`transcript_updated` events.
 
 ## Backfill existing data
 

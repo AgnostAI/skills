@@ -48,3 +48,18 @@ test("LiveKit guidance maps users with user.id", () => {
   assert.doesNotMatch(livekitReference, /enduser\.id/);
   assert.match(skill, /For `livekit-ts` or `livekit-py`[\s\S]*?Use `session\.id`,\n`user\.id`/);
 });
+
+test("Retell uses the final analyzed-call webhook instead of OTLP", () => {
+  const retellReference = frameworks.match(
+    /## retell: call_analyzed webhook[\s\S]*?(?=\n## )/,
+  )?.[0];
+
+  assert.ok(retellReference, "missing Retell webhook reference section");
+  assert.match(skill, /Retell does not expose a documented OTLP export/);
+  assert.match(skill, /enable `call_analyzed`/i);
+  assert.match(skill, /do not add an OTel exporter/i);
+  assert.match(retellReference, /\/api\/voice\/v1\/webhooks\/retell\?org_id=/);
+  assert.match(retellReference, /acknowledges[\s\S]*?`transcript_updated`/i);
+  assert.match(retellReference, /Never forward or\nlog the Retell call `access_token`/);
+  assert.match(readme, /\| Retell \| `call_analyzed` webhook/);
+});

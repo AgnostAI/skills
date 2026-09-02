@@ -52,6 +52,7 @@ attribute, or metadata gaps. Otherwise use the matching SDK/MCP route below.
 | TypeScript MCP server | `agnost` MCP wrapper dependency/env plus server patch |
 | Python MCP/FastMCP server | `agnost-mcp` wrapper dependency/env plus server patch |
 | LiveKit Agents (Python or TypeScript) | Native LiveKit traces through a standard OTel batch exporter |
+| Retell | `call_analyzed` webhook to the Agnost voice endpoint |
 | Vercel AI SDK | Official Agnost OTel exporter setup plus modern AI SDK telemetry option |
 | OpenAI SDK | Existing or selected OpenInference + OTLP dependency/env |
 | Mastra | OTel dependency/env plus startup observability config |
