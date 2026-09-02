@@ -45,19 +45,26 @@ Inspect an existing OTel path before adding another integration. When it emits a
 supported span family, keep it and fill only proven identity, hierarchy,
 attribute, or metadata gaps. Otherwise use the matching SDK/MCP route below.
 
+### Application and agent frameworks
+
 | Target | Path |
 | --- | --- |
 | TypeScript conversation app | `agnostai` SDK dependency/env plus real handler wrapping |
 | Python conversation app | `agnost` SDK dependency/env plus real handler wrapping |
 | TypeScript MCP server | `agnost` MCP wrapper dependency/env plus server patch |
 | Python MCP/FastMCP server | `agnost-mcp` wrapper dependency/env plus server patch |
-| LiveKit Agents (Python or TypeScript) | Native LiveKit traces through a standard OTel batch exporter |
-| Retell | `call_analyzed` webhook to the Agnost voice endpoint |
 | Vercel AI SDK | Official Agnost OTel exporter setup plus modern AI SDK telemetry option |
 | OpenAI SDK | Existing or selected OpenInference + OTLP dependency/env |
 | Mastra | OTel dependency/env plus startup observability config |
 | Spectrum TS | OTel dependency/env plus app-level message-loop span recipe |
 | LangChain | LangSmith/OTLP dependency/env |
+
+### Voice agents
+
+| Target | Path |
+| --- | --- |
+| LiveKit Agents (Python or TypeScript) | Native LiveKit traces through a standard OTel batch exporter |
+| Retell | `call_analyzed` webhook to the Agnost voice endpoint |
 
 When a TypeScript package contains MCP code and regular app/agent/model code,
 preserve its supported existing OTel path or use the TypeScript conversation

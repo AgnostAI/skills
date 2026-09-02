@@ -46,6 +46,9 @@ test("LiveKit guidance maps users with user.id", () => {
   assert.match(livekitReference, /"user\.id": user_id/);
   assert.match(livekitReference, /"user\.id": userId/);
   assert.doesNotMatch(livekitReference, /enduser\.id/);
+  assert.match(readme, /### Voice agents[\s\S]*?\| LiveKit Agents/);
+  assert.match(skill, /Voice-agent routes:[\s\S]*?#livekit-agents-native-otlp/);
+  assert.match(skill, /### Voice agents[\s\S]*?For `livekit-ts` or `livekit-py`/);
   assert.match(skill, /For `livekit-ts` or `livekit-py`[\s\S]*?Use `session\.id`,\n`user\.id`/);
 });
 

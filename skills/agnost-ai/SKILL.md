@@ -138,13 +138,16 @@ Open only the matching section from `references/frameworks.md`:
 - `#mcp-ts-agnost`
 - `#mcp-py-agnost-mcp`
 - `#vercel-ai-otlp`
-- `#livekit-agents-native-otlp`
-- `#retell-call-analyzed-webhook`
 - `#openai-openinference-otlp`
 - `#mastra-otlp`
 - `#spectrum-ts-app-level-otel-spans`
 - `#langchain-langsmith-otel-mode`
 - `#custom-otel-spans`
+
+Voice-agent routes:
+
+- `#livekit-agents-native-otlp`
+- `#retell-call-analyzed-webhook`
 
 For `vercel-ai`, read `references/frameworks.md#vercel-ai-otlp` before editing.
 Use the official Agnost recipe only: OTel exporter setup plus
@@ -154,6 +157,8 @@ configure env/deps only if the user chose OTel, then report that app telemetry
 requires migrating to a supported Vercel AI SDK call shape or using SDK
 instrumentation. Do not generate custom OTLP fetches, synthetic spans, or
 wrapper functions.
+
+### Voice agents
 
 For `livekit-ts` or `livekit-py`, read
 `references/frameworks.md#livekit-agents-native-otlp` before editing. Preserve
