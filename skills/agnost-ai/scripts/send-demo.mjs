@@ -7,6 +7,7 @@
 //   node send-demo.mjs --org-id <id> [--transport ingest|otel] [--mode local|prod]
 //                       [--agent <name>] [--session <id>] [--json]
 import { endpointsFor, resolveOrgId, captureSession, captureEvent, sendOtlpTrace } from "./lib/agnost.mjs";
+import { NO_ORG_ID, printHelpAndExit } from "./lib/cli.mjs";
 import { randomUUID } from "node:crypto";
 
 function arg(name, def) {
@@ -14,6 +15,14 @@ function arg(name, def) {
   const value = process.argv[i + 1];
   return i !== -1 && value && !value.startsWith("--") ? value : def;
 }
+
+printHelpAndExit(`
+Usage: node send-demo.mjs --org-id <id> [--transport ingest|otel] [--mode local|prod] [--agent <name>] [--session <id>] [--json]
+
+Send one setup event to check that Agnost accepts traffic. This does not prove
+the customer app is integrated. Pass --org-id from the dashboard.
+`);
+
 const jsonOut = process.argv.includes("--json");
 const orgId = resolveOrgId({ orgId: arg("org-id", null) });
 const transport = arg("transport", "ingest");
@@ -24,7 +33,7 @@ const session = arg("session", `setup-${randomUUID().slice(0, 8)}`);
 if (!["ingest", "otel"].includes(transport)) fail("--transport must be ingest or otel");
 if (!["local", "prod"].includes(mode)) fail("--mode must be local or prod");
 if (!orgId) {
-  fail("no org id. Run provision.mjs first or pass --org-id.");
+  fail(NO_ORG_ID);
 }
 
 const eps = endpointsFor(mode);

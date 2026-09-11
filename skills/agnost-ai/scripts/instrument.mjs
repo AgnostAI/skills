@@ -15,6 +15,7 @@
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import { endpointsFor, readConfig, resolveOrgId } from "./lib/agnost.mjs";
+import { NO_ORG_ID, printHelpAndExit } from "./lib/cli.mjs";
 
 function arg(name, def = null) {
   const i = process.argv.indexOf(`--${name}`);
@@ -26,6 +27,14 @@ function flag(name) {
   return process.argv.includes(`--${name}`);
 }
 
+printHelpAndExit(`
+Usage: node instrument.mjs --dir <path> --framework <name> --org-id <id> [--mode local|prod] [--env-mode file|shell|manual] [--json]
+
+Apply the known Agnost edit for a detected framework. Run this script; do not
+read it into context. Pass --org-id from the Agnost dashboard. Do not invent
+an org id.
+`);
+
 const dir = arg("dir", process.cwd());
 const framework = arg("framework", null);
 const mode = arg("mode", readConfig(dir)?.mode || "local");
@@ -33,7 +42,7 @@ const orgId = resolveOrgId({ orgId: arg("org-id", null), dir });
 const envMode = arg("env-mode", process.env.AGNOST_ENV_MODE || "file");
 const jsonOut = flag("json");
 
-if (!orgId) fail("no org id. Run provision.mjs first or pass --org-id.");
+if (!orgId) fail(NO_ORG_ID);
 if (!framework) fail("no framework. Run detect.mjs first and pass --framework <name>.");
 if (!["local", "prod"].includes(mode)) fail("--mode must be local or prod");
 if (!["file", "shell", "manual"].includes(envMode)) fail("--env-mode must be file, shell, or manual");
@@ -544,7 +553,7 @@ function patchVercelNextStartup() {
   const { pkg } = readPackageJson();
   const deps = packageDependencyMap(pkg);
   if (!deps.next) {
-    result.warnings.push("Vercel AI OTel env/deps added; add the startup exporter from references/frameworks.md if this is not a Next.js app");
+    result.warnings.push("Vercel AI OTel env/deps added; add the startup exporter from references/vercel-ai.md if this is not a Next.js app");
     return false;
   }
 
@@ -912,20 +921,20 @@ function escapeRe(s) {
 
 function referenceFor(name) {
   return {
-    "conversation-ts": "references/frameworks.md#conversation-ts-agnostai",
-    "conversation-py": "references/frameworks.md#conversation-py-agnost",
-    "mcp-ts": "references/frameworks.md#mcp-ts-agnost",
-    "mcp-py": "references/frameworks.md#mcp-py-agnost-mcp",
-    "vercel-ai": "references/frameworks.md#vercel-ai-otlp",
-    "livekit-ts": "references/frameworks.md#livekit-agents-native-otlp",
-    "livekit-py": "references/frameworks.md#livekit-agents-native-otlp",
-    "openai-ts": "references/frameworks.md#openai-openinference-otlp",
-    "openai-py": "references/frameworks.md#openai-openinference-otlp",
-    "mastra": "references/frameworks.md#mastra-otlp",
-    "spectrum-ts": "references/frameworks.md#spectrum-ts-app-level-otel-spans",
-    "langchain-ts": "references/frameworks.md#langchain-langsmith-otel-mode",
-    "langchain-py": "references/frameworks.md#langchain-langsmith-otel-mode",
-  }[name] || "references/frameworks.md";
+    "conversation-ts": "references/conversation-ts.md",
+    "conversation-py": "references/conversation-py.md",
+    "mcp-ts": "references/mcp-ts.md",
+    "mcp-py": "references/mcp-py.md",
+    "vercel-ai": "references/vercel-ai.md",
+    "livekit-ts": "references/livekit.md",
+    "livekit-py": "references/livekit.md",
+    "openai-ts": "references/openai.md",
+    "openai-py": "references/openai.md",
+    "mastra": "references/mastra.md",
+    "spectrum-ts": "references/spectrum-ts.md",
+    "langchain-ts": "references/langchain.md",
+    "langchain-py": "references/langchain.md",
+  }[name] || "references/README.md";
 }
 
 function fail(message) {

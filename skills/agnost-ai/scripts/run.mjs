@@ -4,6 +4,7 @@
 import { execFileSync } from "node:child_process";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { printHelpAndExit } from "./lib/cli.mjs";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 
@@ -16,6 +17,13 @@ function arg(name, def = null) {
 function flag(name) {
   return process.argv.includes(`--${name}`);
 }
+
+printHelpAndExit(`
+Usage: node run.mjs [--dir <path>] [--org-id <id>] [--prod] [--strategy auto|sdk|otel] [--env-mode file|shell|manual] [--json]
+
+Local sandbox orchestrator only. Do not run this on a customer app. It may mint
+a fake org id and send a setup event, which does not prove integration.
+`);
 
 const dir = resolve(arg("dir", process.cwd()));
 const mode = flag("prod") || process.env.AGNOST_MODE === "prod" ? "prod" : "local";

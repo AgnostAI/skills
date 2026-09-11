@@ -6,12 +6,20 @@
 // Usage: node detect.mjs [--dir <path>] [--strategy auto|sdk|otel] [--json]
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { printHelpAndExit } from "./lib/cli.mjs";
 
 function arg(name, def) {
   const i = process.argv.indexOf(`--${name}`);
   const value = process.argv[i + 1];
   return i !== -1 && value && !value.startsWith("--") ? value : def;
 }
+
+printHelpAndExit(`
+Usage: node detect.mjs [--dir <path>] [--strategy auto|sdk|otel] [--json]
+
+Inspect a project directory and print the Agnost integration route.
+`);
+
 const dir = arg("dir", process.cwd());
 const strategy = arg("strategy", process.env.AGNOST_STRATEGY || "auto");
 const jsonOut = process.argv.includes("--json");

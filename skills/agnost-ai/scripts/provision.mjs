@@ -13,6 +13,7 @@
 // Usage:
 //   node provision.mjs [--local|--prod] [--org-id <id>] [--name <label>] [--email <e>] [--dir <path>] [--json]
 import { writeConfig, resolveOrgId, newOrgId, isUuid, endpointsFor } from "./lib/agnost.mjs";
+import { printHelpAndExit } from "./lib/cli.mjs";
 
 function arg(name, def) {
   const i = process.argv.indexOf(`--${name}`);
@@ -22,6 +23,13 @@ function arg(name, def) {
 function flag(name) {
   return process.argv.includes(`--${name}`);
 }
+
+printHelpAndExit(`
+Usage: node provision.mjs [--local|--prod] [--org-id <id>] [--name <label>] [--email <e>] [--dir <path>] [--json]
+
+Sandbox helper to resolve an org id. Do not run this on a customer app to mint
+an org id. Customer integrations must pass --org-id from the dashboard.
+`);
 
 const dir = arg("dir", process.cwd());
 const jsonOut = flag("json");
