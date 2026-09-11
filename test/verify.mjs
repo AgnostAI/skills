@@ -18,7 +18,7 @@ const minEvents = Number(arg("min-events", "1"));
 const timeoutMs = Number(arg("timeout-ms", "20000"));
 
 if (!orgId) {
-  console.error("error: no org id. Run provision.mjs first or pass --org-id.");
+  console.error("error: no org id. Pass --org-id or set AGNOST_ORG_ID; do not invent one.");
   process.exit(2);
 }
 if (!Number.isFinite(minEvents) || minEvents < 1) {

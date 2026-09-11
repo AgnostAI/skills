@@ -1,14 +1,20 @@
 ---
 name: agnost-ai
-description: USE to guide an AI agent or CLI tool through adding Agnost AI analytics to a customer Python or TypeScript app from this installed skill directory. Inspect existing telemetry first, preserve a supported OTel path when it produces usable AI spans, otherwise use Agnost SDK/MCP packages, then verify the real conversation data model end to end.
+description: Use this skill when adding Agnost AI analytics, tracing, or observability to a Python or TypeScript chat app, agent, MCP server, LiveKit or Retell voice agent, Vercel AI SDK, OpenAI, LangChain, Mastra, or Spectrum project. Inspect existing OpenTelemetry first; keep a supported OTel path or add the Agnost SDK/MCP wrapper, then verify real conversation data — even if the user does not name Agnost.
+license: MIT
+compatibility: Requires Node.js >= 18 to run bundled scripts.
 ---
 
 # Agnost AI integration
 
 Work from the target app root. This is the skill route: do not tell the user to
 install an npm package, use a global binary, or run a package runner. Agents may
-call bundled `scripts/` helpers from this installed skill directory, but the
-skill contract is the integration workflow.
+run bundled `scripts/` helpers from this skill directory. Do not read
+`scripts/instrument.mjs` into context; run it and use the JSON output.
+
+Resolve the skill root as the directory that contains this `SKILL.md`
+(`${CLAUDE_SKILL_DIR}` on Claude Code). Script paths below are relative to that
+root.
 
 ## Ask first
 
@@ -35,8 +41,8 @@ Inspect existing telemetry before choosing an integration:
 - When an existing OpenTelemetry path emits supported spans, preserve it and
   route those spans to Agnost. Do not install a Conversation SDK merely because
   the app is a general TypeScript or Python application.
-- Retell does not expose a documented OTLP export. For Retell agents, configure
-  the `call_analyzed` webhook route in `references/frameworks.md`; do not use
+- Retell does not expose a documented OTLP export. For Retell agents, read
+  `references/retell.md` and configure the `call_analyzed` webhook; do not use
   Live Monitoring, Analytics, or `transcript_updated` as a trace substitute.
 - Treat automatic OTel detection as a candidate, not proof. Inspect or trigger
   one real interaction and validate the resulting trace with the checklist
@@ -49,31 +55,14 @@ Inspect existing telemetry before choosing an integration:
 
 Use SDK/MCP integration when there is no usable existing OTel path:
 
-- TypeScript conversation app: install `agnostai`, initialize once, wrap the real
-  model/agent call with `begin()` and `end()`.
-- Python conversation app: install `agnost`, initialize once, wrap the real
-  model/agent call with `begin()`/`end()` or `track_ai()`.
-- TypeScript MCP server: install `agnost`, call `configureFromEnv()` and
-  `trackMCP(server, orgId, config)` after server construction and before
-  transport connection. For HTTP/OAuth MCP servers, preserve the official
-  transport request path (`transport.handleRequest(req, res, req.body)`) so
-  `extra.requestInfo.headers` reaches Agnost. If the target uses a custom
-  transport or manual `handleMessage(...)`, pass
-  `{ requestInfo: { headers: req.headers }, authInfo: req.auth }`. If OAuth
-  middleware validates the bearer token, attach stable non-secret identity on
-  `req.auth.extra` such as `{ userId, tokenId }`; Agnost uses `tokenId` as the
-  durable OAuth conversation/session key. If headers are unavailable, Agnost
-  can also read identity from `authInfo.sub`, `authInfo.claims`,
-  `authInfo.tokenPayload`, `authInfo.extra`, `authInfo.token`,
-  `authInfo.accessToken`, or `authInfo.access_token`; never use OAuth
-  `clientId` as the user id. Never log raw bearer tokens.
-- Python MCP/FastMCP server: install `agnost-mcp`, call `track(server, org_id,
-  config(...))` after tool registration and before `run()`. The SDK supports
-  stdio, SSE, and stateful/stateless Streamable HTTP. Multiple tracked server
-  instances in one process must use the same org ID and config. Without a
-  custom sync/async `identify`, built-in identity uses bearer or validated MCP
-  auth context without forwarding raw credentials, and identity is cached per
-  session key.
+- TypeScript conversation app: install `agnostai`, then follow
+  `references/conversation-ts.md`.
+- Python conversation app: install `agnost`, then follow
+  `references/conversation-py.md`.
+- TypeScript MCP server: install `agnost`, then follow `references/mcp-ts.md`
+  after server construction and before transport connection.
+- Python MCP/FastMCP server: install `agnost-mcp`, then follow
+  `references/mcp-py.md` after tool registration and before `run()`.
 
 If no usable supported OTel route exists and a Node/TypeScript project contains
 MCP code but is not solely an MCP server
@@ -131,47 +120,43 @@ synthetic spans solely to rename attributes.
 
 ## Read the right reference
 
-Open only the matching section from `references/frameworks.md`:
+Open only the matching file:
 
-- `#conversation-ts-agnostai`
-- `#conversation-py-agnost`
-- `#mcp-ts-agnost`
-- `#mcp-py-agnost-mcp`
-- `#vercel-ai-otlp`
-- `#openai-openinference-otlp`
-- `#mastra-otlp`
-- `#spectrum-ts-app-level-otel-spans`
-- `#langchain-langsmith-otel-mode`
-- `#custom-otel-spans`
+- `references/conversation-ts.md`
+- `references/conversation-py.md`
+- `references/mcp-ts.md`
+- `references/mcp-py.md`
+- `references/vercel-ai.md`
+- `references/openai.md`
+- `references/mastra.md`
+- `references/spectrum-ts.md`
+- `references/langchain.md`
+- `references/custom-otel.md`
+- `references/env.md`
 
 Voice-agent routes:
 
-- `#livekit-agents-native-otlp`
-- `#retell-call-analyzed-webhook`
+- `references/livekit.md`
+- `references/retell.md`
 
-For `vercel-ai`, read `references/frameworks.md#vercel-ai-otlp` before editing.
-Use the official Agnost recipe only: OTel exporter setup plus
-`experimental_telemetry` on modern `generateText`/`streamText`/`generateObject`
-calls. If the app uses legacy `OpenAIStream(...)` without a modern call shape,
-configure env/deps only if the user chose OTel, then report that app telemetry
-requires migrating to a supported Vercel AI SDK call shape or using SDK
-instrumentation. Do not generate custom OTLP fetches, synthetic spans, or
+For `vercel-ai`, read `references/vercel-ai.md` before editing. Use the official
+Agnost recipe only. If the app uses legacy `OpenAIStream(...)` without a modern
+call shape, configure env/deps only if the user chose OTel, then report that app
+telemetry requires migrating to a supported Vercel AI SDK call shape or using
+SDK instrumentation. Do not generate custom OTLP fetches, synthetic spans, or
 wrapper functions.
 
 ### Voice agents
 
-For `livekit-ts` or `livekit-py`, read
-`references/frameworks.md#livekit-agents-native-otlp` before editing. Preserve
-LiveKit's native spans: configure a standard OTel batch exporter and call the
-framework tracer-provider hook before `AgentSession.start()`. Use `session.id`,
+For `livekit-ts` or `livekit-py`, read `references/livekit.md` before editing.
+Preserve LiveKit's native spans. Use `session.id`,
 `user.id`, `user.*`, and `conversation.*` metadata. Do not add a
 custom span wrapper, synthesize OTLP payloads, or use LiveKit room webhooks as a
 substitute for agent traces.
 
-For Retell, read `references/frameworks.md#retell-call-analyzed-webhook`.
-Configure the direct Agnost webhook URL with the real organization UUID and
-enable `call_analyzed`. Do not add an OTel exporter or ingest incremental
-`transcript_updated` events.
+For Retell, read `references/retell.md`. Enable `call_analyzed` on the direct
+Agnost webhook URL with the real organization UUID. Do not add an OTel exporter
+or ingest incremental `transcript_updated` events.
 
 ## Backfill existing data
 
@@ -187,13 +172,14 @@ reference for event hierarchy, input/output shape, and historical timestamps.
 ## Script helpers
 
 Scripts are helpers for agents and CLI tools, not the product surface.
-
-Use them only after choosing the route above:
+Run them with Node >= 18 after choosing the route above. Pass `--help` for
+flags. Prefix paths with the skill root when the working directory is the
+target app:
 
 ```bash
-node "$SKILL_DIR/scripts/detect.mjs" --dir . --strategy <auto|sdk|otel> --json
-node "$SKILL_DIR/scripts/instrument.mjs" --dir . --framework <framework> --org-id <org-id> --mode <local|prod> --env-mode <file|shell|manual> --json
-node "$SKILL_DIR/scripts/send-demo.mjs" --org-id <org-id> --transport <ingest|otel> --mode <local|prod> --json
+node scripts/detect.mjs --dir . --strategy <auto|sdk|otel> --json
+node scripts/instrument.mjs --dir . --framework <framework> --org-id <org-id> --mode <local|prod> --env-mode <file|shell|manual> --json
+node scripts/send-demo.mjs --org-id <org-id> --transport <ingest|otel> --mode <local|prod> --json
 ```
 
 `detect.mjs` can suggest a route. In `auto` mode it keeps a supported framework's
@@ -201,6 +187,13 @@ existing OTel setup, but that suggestion still requires real trace validation.
 `instrument.mjs` can apply the narrowest known edit. `send-demo.mjs` can check
 whether Agnost accepts traffic, but it does not prove the customer app is
 integrated.
+
+Do not run `scripts/run.mjs` on a customer app. It is a local sandbox
+orchestrator: it may mint a fake org id and send a setup event. That is not
+integration.
+
+`scripts/provision.mjs` is sandbox-only. For customer work, pass `--org-id` from
+the dashboard. Never invent an org id.
 
 ## Definition of done
 

@@ -16,28 +16,29 @@ surface. Bundled scripts are helpers after the route is chosen.
 
 ## Install
 
-Once mirrored to the public `AgnostAI/skills` repo, install with:
-
 ```bash
 npx skills add AgnostAI/skills --skill agnost-ai
 ```
 
 There is no separate `skill.yml`. The skill manifest is the YAML frontmatter in
 `skills/agnost-ai/SKILL.md`, which is what the Vercel Skills CLI discovers and
-installs.
+installs. Licensed under MIT.
 
 ## Agent Helper Commands
 
-From the target project root, an agent may call helpers by absolute path:
+From the target project root, prefix the skill directory that contains
+`SKILL.md` (`${CLAUDE_SKILL_DIR}` on Claude Code):
 
 ```bash
-node "$SKILL_DIR/scripts/detect.mjs" --dir . --strategy <auto|sdk|otel> --json
-node "$SKILL_DIR/scripts/instrument.mjs" --dir . --framework <framework> --org-id <org-id> --mode <local|prod> --env-mode <file|shell|manual> --json
-node "$SKILL_DIR/scripts/send-demo.mjs" --org-id <org-id> --transport <ingest|otel> --mode <local|prod> --json
+node scripts/detect.mjs --dir . --strategy <auto|sdk|otel> --json
+node scripts/instrument.mjs --dir . --framework <framework> --org-id <org-id> --mode <local|prod> --env-mode <file|shell|manual> --json
+node scripts/send-demo.mjs --org-id <org-id> --transport <ingest|otel> --mode <local|prod> --json
 ```
 
-`send-demo.mjs` checks transport only. Real verification still requires a
-customer chat, agent action, or MCP tool call after restart/deploy.
+Pass `--help` on any helper for flags. `send-demo.mjs` checks transport only.
+`run.mjs` and `provision.mjs` are local sandbox helpers; do not use them on a
+customer app or invent an org id. Real verification still requires a customer
+chat, agent action, or MCP tool call after restart/deploy.
 
 ## Supported Routes
 
@@ -93,7 +94,22 @@ Prod integrations require the real dashboard org id.
 skills/
   agnost-ai/
     SKILL.md
-    references/frameworks.md
+    references/
+      README.md
+      env.md
+      conversation-ts.md
+      conversation-py.md
+      mcp-ts.md
+      mcp-py.md
+      vercel-ai.md
+      livekit.md
+      retell.md
+      openai.md
+      mastra.md
+      spectrum-ts.md
+      langchain.md
+      custom-otel.md
+      ingest.md
     scripts/
       provision.mjs
       detect.mjs
@@ -101,6 +117,8 @@ skills/
       run.mjs
       send-demo.mjs
       lib/agnost.mjs
+      lib/cli.mjs
+LICENSE
 README.md
 TEST-REPORT.md
 ```

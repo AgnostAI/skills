@@ -36,7 +36,7 @@ test("LiveKit TypeScript instrumentation adds current OTel 2.x dependencies and 
     const pkg = JSON.parse(readFileSync(join(dir, "package.json"), "utf8"));
     const env = readFileSync(join(dir, ".env"), "utf8");
 
-    assert.equal(first.reference, "references/frameworks.md#livekit-agents-native-otlp");
+    assert.equal(first.reference, "references/livekit.md");
     assert.equal(first.appTelemetryReady, false);
     assert.equal(pkg.dependencies["@opentelemetry/api"], "^1.9.0");
     assert.equal(pkg.dependencies["@opentelemetry/exporter-trace-otlp-http"], "^0.220.0");
@@ -59,7 +59,7 @@ test("LiveKit Python instrumentation preserves LiveKit and adds OTLP exporter re
     const first = instrument(dir, "livekit-py");
     const requirements = readFileSync(join(dir, "requirements.txt"), "utf8");
 
-    assert.equal(first.reference, "references/frameworks.md#livekit-agents-native-otlp");
+    assert.equal(first.reference, "references/livekit.md");
     assert.match(requirements, /^livekit-agents\[openai\]$/m);
     assert.match(requirements, /^opentelemetry-sdk$/m);
     assert.match(requirements, /^opentelemetry-exporter-otlp-proto-http$/m);
