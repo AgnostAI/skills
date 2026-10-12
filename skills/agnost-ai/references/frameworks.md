@@ -16,6 +16,7 @@ Agnost SDK/MCP wrapper or the narrowest framework recipe that closes the gap.
 - [livekit agents: native OTLP](#livekit-agents-native-otlp)
 - [retell: call_analyzed webhook](#retell-call-analyzed-webhook)
 - [openai: OpenInference OTLP](#openai-openinference-otlp)
+- [anthropic: OpenInference OTLP](#anthropic-openinference-otlp)
 - [mastra: OTLP](#mastra-otlp)
 - [spectrum-ts: app-level OTel spans](#spectrum-ts-app-level-otel-spans)
 - [langchain: LangSmith OTel mode](#langchain-langsmith-otel-mode)
@@ -439,6 +440,28 @@ openAIInstrumentation.manuallyInstrument(OpenAI as never);
 ```
 
 Startup wiring and user/session context remain app-specific.
+
+## anthropic: OpenInference OTLP
+
+Same exporter setup as the OpenAI recipe above; swap in OpenInference's
+Anthropic instrumentor (`openinference-instrumentation-anthropic` /
+`@arizeai/openinference-instrumentation-anthropic`):
+
+```python
+from openinference.instrumentation.anthropic import AnthropicInstrumentor
+AnthropicInstrumentor().instrument(tracer_provider=provider)
+```
+
+```ts
+import { AnthropicInstrumentation } from "@arizeai/openinference-instrumentation-anthropic";
+import Anthropic from "@anthropic-ai/sdk";
+
+const anthropicInstrumentation = new AnthropicInstrumentation();
+anthropicInstrumentation.manuallyInstrument(Anthropic);
+// pass instrumentations: [anthropicInstrumentation] to NodeSDK
+```
+
+Apps using both SDKs are detected as OpenAI; register both instrumentors.
 
 ## mastra: OTLP
 

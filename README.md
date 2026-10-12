@@ -55,6 +55,7 @@ attribute, or metadata gaps. Otherwise use the matching SDK/MCP route below.
 | Python MCP/FastMCP server | `agnost-mcp` wrapper dependency/env plus server patch |
 | Vercel AI SDK | Official Agnost OTel exporter setup plus modern AI SDK telemetry option |
 | OpenAI SDK | Existing or selected OpenInference + OTLP dependency/env |
+| Anthropic SDK | Existing or selected OpenInference + OTLP dependency/env |
 | Mastra | OTel dependency/env plus startup observability config |
 | Spectrum TS | OTel dependency/env plus app-level message-loop span recipe |
 | LangChain | LangSmith/OTLP dependency/env |
