@@ -89,7 +89,8 @@ Keep input and output capture enabled by default. For options named
 asks to redact inputs/outputs or the target app's privacy requirements demand it.
 
 Supported OTel recipe targets include LiveKit Agents, Vercel AI SDK, Mastra,
-Spectrum TS, LangChain, OpenAI, and other already-instrumented OTel apps.
+Spectrum TS, LangChain, OpenAI, Anthropic, and other already-instrumented OTel
+apps.
 
 Do not make a synthetic fetcher or custom OTLP payload path when an official SDK,
 MCP wrapper, or framework OTel option exists.
@@ -139,6 +140,7 @@ Open only the matching section from `references/frameworks.md`:
 - `#mcp-py-agnost-mcp`
 - `#vercel-ai-otlp`
 - `#openai-openinference-otlp`
+- `#anthropic-openinference-otlp`
 - `#mastra-otlp`
 - `#spectrum-ts-app-level-otel-spans`
 - `#langchain-langsmith-otel-mode`

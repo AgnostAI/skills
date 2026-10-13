@@ -36,6 +36,18 @@ const cases = [
     wantFramework: "vercel-ai",
     wantTransport: "otel",
   },
+  {
+    name: "Anthropic app with existing OTel setup uses OpenInference",
+    pkg: { dependencies: { "@anthropic-ai/sdk": "*", "@opentelemetry/sdk-node": "*" } },
+    wantFramework: "anthropic-ts",
+    wantTransport: "otel",
+  },
+  {
+    name: "app with OpenAI and Anthropic SDKs keeps the OpenAI route",
+    pkg: { dependencies: { openai: "*", "@anthropic-ai/sdk": "*", "@opentelemetry/sdk-node": "*" } },
+    wantFramework: "openai-ts",
+    wantTransport: "otel",
+  },
 ];
 
 for (const testCase of cases) {

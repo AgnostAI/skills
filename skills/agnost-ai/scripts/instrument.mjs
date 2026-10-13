@@ -131,6 +131,21 @@ if (framework === "mcp-ts") {
     "opentelemetry-exporter-otlp-proto-http",
   ]);
   result.warnings.push("openai-py dependency/env added; initialize OpenAIInstrumentor before creating the OpenAI client and pass user/session context per docs");
+} else if (framework === "anthropic-ts") {
+  setupOtelTypeScript({
+    "@arizeai/openinference-instrumentation-anthropic": "^0.2.11",
+    "@opentelemetry/sdk-node": "^0.52.1",
+    "@opentelemetry/exporter-trace-otlp-proto": "^0.52.1",
+    "@opentelemetry/api": "^1.9.0",
+  });
+  result.warnings.push("anthropic-ts dependency/env added; initialize AnthropicInstrumentation and call manuallyInstrument(Anthropic) before creating the client, and pass user/session context per docs");
+} else if (framework === "anthropic-py") {
+  setupOtelPython([
+    "openinference-instrumentation-anthropic",
+    "opentelemetry-sdk",
+    "opentelemetry-exporter-otlp-proto-http",
+  ]);
+  result.warnings.push("anthropic-py dependency/env added; initialize AnthropicInstrumentor before creating the Anthropic client and pass user/session context per docs");
 } else if (framework === "mastra") {
   setupOtelTypeScript({
     "@mastra/observability": "latest",
@@ -921,6 +936,8 @@ function referenceFor(name) {
     "livekit-py": "references/frameworks.md#livekit-agents-native-otlp",
     "openai-ts": "references/frameworks.md#openai-openinference-otlp",
     "openai-py": "references/frameworks.md#openai-openinference-otlp",
+    "anthropic-ts": "references/frameworks.md#anthropic-openinference-otlp",
+    "anthropic-py": "references/frameworks.md#anthropic-openinference-otlp",
     "mastra": "references/frameworks.md#mastra-otlp",
     "spectrum-ts": "references/frameworks.md#spectrum-ts-app-level-otel-spans",
     "langchain-ts": "references/frameworks.md#langchain-langsmith-otel-mode",

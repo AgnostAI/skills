@@ -110,6 +110,9 @@ function nodeOtelRoute(deps) {
   if (has(deps, "openai", "@openai/agents")) {
     return rec("openai-ts", "node", "otel", "OpenAI SDK via OpenInference OTel → Agnost collector");
   }
+  if (has(deps, "@anthropic-ai/sdk")) {
+    return rec("anthropic-ts", "node", "otel", "Anthropic SDK via OpenInference OTel → Agnost collector");
+  }
   return null;
 }
 
@@ -119,6 +122,7 @@ function hasNodeOtelDependencies(deps) {
     "@opentelemetry",
     "@arizeai/openinference-core",
     "@arizeai/openinference-instrumentation-openai",
+    "@arizeai/openinference-instrumentation-anthropic",
     "@vercel/otel",
     "@mastra/observability",
     "@mastra/otel-exporter"
@@ -134,6 +138,9 @@ function pythonOtelRoute(py) {
   }
   if (hasPy(py, "openai", "openai-agents")) {
     return rec("openai-py", "python", "otel", "OpenAI Python SDK via OpenInference OTel → Agnost collector");
+  }
+  if (hasPy(py, "anthropic")) {
+    return rec("anthropic-py", "python", "otel", "Anthropic Python SDK via OpenInference OTel → Agnost collector");
   }
   return null;
 }
