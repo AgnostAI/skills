@@ -154,6 +154,9 @@ const interaction = agnost.begin({
   agentName: "support-agent",
   input: userMessage,
 });
+if (!interaction) {
+  throw new Error("Agnost is not initialized. Check AGNOST_ORG_ID and call agnost.init() first.");
+}
 
 try {
   const reply = await callModel(userMessage);
@@ -197,6 +200,8 @@ interaction = agnost.begin(
     input=user_message,
     conversation_id=conversation_id,
 )
+if interaction is None:
+    raise RuntimeError("Agnost is not initialized. Check AGNOST_ORG_ID and call agnost.init() first.")
 
 try:
     reply = call_model(user_message)
@@ -321,12 +326,13 @@ so multi-user HTTP servers retain per-session attribution.
 
 ## vercel-ai: OTLP
 
-Official recipe: https://docs.agnost.ai/otel-vercel-ai
+Official recipe: https://docs.agnost.ai/vercel-ai
 
 Install:
 
 ```bash
-npm install @opentelemetry/sdk-node @opentelemetry/exporter-trace-otlp-proto
+npm install ai @ai-sdk/otel @opentelemetry/sdk-node \
+  @opentelemetry/exporter-trace-otlp-proto
 ```
 
 Register once at startup. For Next.js apps, create `instrumentation.ts` (or
@@ -338,13 +344,17 @@ export async function register() {
 
   const { NodeSDK } = await import("@opentelemetry/sdk-node");
   const { OTLPTraceExporter } = await import("@opentelemetry/exporter-trace-otlp-proto");
+  const { registerTelemetry } = await import("ai");
+  const { OpenTelemetry } = await import("@ai-sdk/otel");
 
-  new NodeSDK({
+  const sdk = new NodeSDK({
     traceExporter: new OTLPTraceExporter({
       url: `${process.env.AGNOST_OTEL_URL || "https://otel.agnost.ai"}/v1/traces`,
       headers: { "X-Agnost-Org-ID": process.env.AGNOST_ORG_ID || "" },
     }),
-  }).start();
+  });
+  sdk.start();
+  registerTelemetry(new OpenTelemetry({ runtimeContext: true }));
 }
 ```
 
@@ -354,21 +364,23 @@ Enable telemetry on Vercel AI calls:
 const result = await generateText({
   model,
   prompt,
-  experimental_telemetry: {
+  runtimeContext: { sessionId, userId },
+  telemetry: {
     isEnabled: true,
-    metadata: { sessionId, userId },
+    includeRuntimeContext: { sessionId: true, userId: true },
   },
 });
 ```
 
 Add this option when the app uses
-`generateText({ ... })`, `streamText({ ... })`, or `generateObject({ ... })`
-without `experimental_telemetry`. If the app has `next` installed and no
+`generateText({ ... })` or `streamText({ ... })` without registered telemetry.
+If the app has `next` installed and no
 instrumentation file exists, it also creates the Next.js startup exporter above.
 
+For AI SDK 6 and earlier, retain that release's `experimental_telemetry` API.
 For older Vercel AI apps using `OpenAIStream(...)`, do not generate custom OTLP
 payload code. The official Agnost Vercel AI recipe covers modern
-`generateText`/`streamText`/`generateObject` calls with `experimental_telemetry`.
+`generateText` and `streamText` calls.
 Configure env/deps only if the user chose OTel, and report that app telemetry
 requires migrating to a supported Vercel AI SDK call shape or using SDK
 instrumentation.
@@ -390,13 +402,9 @@ npm install @arizeai/openinference-instrumentation-openai \
   @opentelemetry/exporter-trace-otlp-proto @opentelemetry/api
 ```
 
-For TypeScript, pin `@arizeai/openinference-instrumentation-openai` to match
-the installed `openai` major:
-
-| `openai` | OpenInference instrumentation |
-| --- | --- |
-| `^6.7.0` | `^4.0.0` |
-| `^4.95.0` through `^5.x` | `~2.3.1` |
+Use current matching releases. The current verified pair is `openai@7.45.1`
+with `@arizeai/openinference-instrumentation-openai@4.4.2`. Upgrade both
+together if an older application reports an `APIPromise` export mismatch.
 
 Python startup:
 
@@ -434,7 +442,7 @@ new NodeSDK({
   instrumentations: [openAIInstrumentation],
 }).start();
 
-import OpenAI from "openai";
+const { default: OpenAI } = await import("openai");
 openAIInstrumentation.manuallyInstrument(OpenAI as never);
 ```
 
@@ -445,7 +453,8 @@ Startup wiring and user/session context remain app-specific.
 Install:
 
 ```bash
-npm install @mastra/observability @mastra/otel-exporter
+npm install @mastra/observability @mastra/otel-exporter \
+  @opentelemetry/exporter-trace-otlp-proto
 ```
 
 Configure Mastra observability:
@@ -483,22 +492,31 @@ Call agents through the Mastra instance so tracing applies.
 Add this `observability` block when the app has an ESM `new Mastra({ ... })`
 startup object without existing observability config.
 
-## spectrum-ts: app-level OTel spans
+## spectrum-ts: native telemetry plus optional transcript spans
 
-Install the app-level OTel exporter dependencies:
-
-```bash
-npm install @opentelemetry/sdk-node @opentelemetry/exporter-trace-otlp-proto @opentelemetry/api
-```
-
-Set env before starting the app:
+Spectrum's native exporter is built in. Set its OTLP environment before the
+app starts and enable telemetry on the Spectrum configuration:
 
 ```bash
 export OTEL_EXPORTER_OTLP_TRACES_ENDPOINT="${AGNOST_OTEL_URL:-https://otel.agnost.ai}/v1/traces"
 export OTEL_EXPORTER_OTLP_HEADERS="X-Agnost-Org-ID=$AGNOST_ORG_ID"
 ```
 
-Initialize the exporter before processing Spectrum messages:
+```ts
+const app = await Spectrum({
+  providers,
+  telemetry: true,
+});
+```
+
+This exports provider, space, content-type, and lifecycle metadata. Current
+Spectrum native spans intentionally omit raw transcript text. Only when Chat
+View needs the actual input/output, install the app-level OTel packages and add
+one turn span around the message handler:
+
+```bash
+npm install @opentelemetry/sdk-node @opentelemetry/exporter-trace-otlp-proto @opentelemetry/api
+```
 
 ```ts
 import { NodeSDK } from "@opentelemetry/sdk-node";
@@ -515,6 +533,7 @@ sdk.start();
 
 const app = await Spectrum({
   providers,
+  telemetry: true,
 });
 
 const tracer = trace.getTracer("spectrum-ts");
@@ -543,11 +562,8 @@ for await (const [space, message] of app.messages) {
 await sdk.shutdown();
 ```
 
-Do not rely on Spectrum's `telemetry: true` flag as the Agnost route. In
-current `spectrum-ts`, local/direct mode does not initialize an OTLP exporter,
-and cloud mode uses Spectrum/Photon telemetry. Use the app-level span above so
-the Agnost collector receives a classified AI turn with session, user, input,
-and output attributes.
+The extra span is for transcript-rich Chat View data; it is not required for
+Spectrum lifecycle events to reach Agnost AI.
 
 ## langchain: LangSmith OTel mode
 
@@ -556,11 +572,12 @@ Official recipe: https://docs.agnost.ai/otel-langchain
 Install:
 
 ```bash
-pip install "langsmith[otel]" opentelemetry-sdk opentelemetry-exporter-otlp-proto-http
+pip install "langsmith[otel]" langchain langchain-openai \
+  opentelemetry-sdk opentelemetry-exporter-otlp-proto-http
 ```
 
 ```bash
-npm install langsmith @opentelemetry/api @opentelemetry/context-async-hooks \
+npm install langsmith @opentelemetry/api @opentelemetry/context-async-hooks@^2 \
   @opentelemetry/sdk-trace-base @opentelemetry/exporter-trace-otlp-proto
 ```
 
@@ -570,6 +587,7 @@ Python:
 
 ```python
 import os
+from langsmith import Client
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
@@ -582,9 +600,9 @@ provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(
 )))
 trace.set_tracer_provider(provider)
 
-os.environ["LANGSMITH_OTEL_ENABLED"] = "true"
 os.environ["LANGSMITH_TRACING"] = "true"
-os.environ["LANGSMITH_OTEL_ONLY"] = "true"
+os.environ["LANGSMITH_TRACING_MODE"] = "otel"
+client = Client(tracing_mode="otel", otel_tracer_provider=provider)
 ```
 
 TypeScript:
@@ -607,9 +625,14 @@ initializeOTEL({
 Pass session/user metadata on each invoke:
 
 ```python
+from langchain_core.tracers.langchain import LangChainTracer
+
 result = agent.invoke(
     {"messages": [{"role": "user", "content": user_message}]},
-    config={"metadata": {"session_id": conversation_id, "user_id": user_id}},
+    config={
+        "callbacks": [LangChainTracer(client=client)],
+        "metadata": {"session_id": conversation_id, "user_id": user_id},
+    },
 )
 ```
 
@@ -620,9 +643,9 @@ const result = await chain.invoke(input, {
 });
 ```
 
-If the app entrypoint is a plain runnable or helper function and no LangSmith
-span appears, wrap the real entrypoint with `traceable`. The local sandbox only
-emitted LangChain OTLP after this wrapper was present.
+The explicit callback above is the verified default for Python. If the app
+entrypoint is a plain helper outside a LangChain runnable, wrap that helper with
+`traceable` and pass the same `client`.
 
 Python:
 
@@ -634,6 +657,7 @@ from langsmith import traceable
     run_type="chain",
     metadata={"session_id": conversation_id, "user_id": user_id},
     tags=["agnost", "langchain-py"],
+    client=client,
 )
 def run_agent(user_message: str):
     return agent.invoke({"messages": [{"role": "user", "content": user_message}]})

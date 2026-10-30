@@ -50,9 +50,13 @@ Inspect existing telemetry before choosing an integration:
 Use SDK/MCP integration when there is no usable existing OTel path:
 
 - TypeScript conversation app: install `agnostai`, initialize once, wrap the real
-  model/agent call with `begin()` and `end()`.
+  model/agent call with `begin()` and `end()`. Because `begin()` returns `null`
+  when initialization failed, guard the returned interaction before calling
+  `end()` so strict TypeScript builds and misconfigured environments fail clearly.
 - Python conversation app: install `agnost`, initialize once, wrap the real
-  model/agent call with `begin()`/`end()` or `track_ai()`.
+  model/agent call with `begin()`/`end()` or `track_ai()`. Guard a `None`
+  interaction so initialization failures stop with an actionable error instead
+  of failing later on `end()`.
 - TypeScript MCP server: install `agnost`, call `configureFromEnv()` and
   `trackMCP(server, orgId, config)` after server construction and before
   transport connection. For HTTP/OAuth MCP servers, preserve the official
@@ -150,9 +154,11 @@ Voice-agent routes:
 - `#retell-call-analyzed-webhook`
 
 For `vercel-ai`, read `references/frameworks.md#vercel-ai-otlp` before editing.
-Use the official Agnost recipe only: OTel exporter setup plus
-`experimental_telemetry` on modern `generateText`/`streamText`/`generateObject`
-calls. If the app uses legacy `OpenAIStream(...)` without a modern call shape,
+For AI SDK 7, use `@ai-sdk/otel`, register its `OpenTelemetry` integration once,
+and pass identity through `runtimeContext` with an explicit
+`telemetry.includeRuntimeContext` allowlist. For AI SDK 6 and earlier, preserve
+the supported `experimental_telemetry` path documented for that installed
+version. If the app uses legacy `OpenAIStream(...)` without a modern call shape,
 configure env/deps only if the user chose OTel, then report that app telemetry
 requires migrating to a supported Vercel AI SDK call shape or using SDK
 instrumentation. Do not generate custom OTLP fetches, synthetic spans, or

@@ -66,3 +66,19 @@ test("Retell uses the final analyzed-call webhook instead of OTLP", () => {
   assert.match(retellReference, /Never forward or\nlog the Retell call `access_token`/);
   assert.match(readme, /\| Retell \| `call_analyzed` webhook/);
 });
+
+test("conversation recipes fail clearly when SDK initialization did not produce an interaction", () => {
+  const typescriptRecipe = frameworks.match(
+    /## conversation-ts: agnostai[\s\S]*?(?=\n## )/,
+  )?.[0];
+  const pythonRecipe = frameworks.match(
+    /## conversation-py: agnost[\s\S]*?(?=\n## )/,
+  )?.[0];
+
+  assert.ok(typescriptRecipe, "missing TypeScript conversation recipe");
+  assert.ok(pythonRecipe, "missing Python conversation recipe");
+  assert.match(typescriptRecipe, /if \(!interaction\)/);
+  assert.match(typescriptRecipe, /Agnost is not initialized/);
+  assert.match(pythonRecipe, /if interaction is None:/);
+  assert.match(pythonRecipe, /Agnost is not initialized/);
+});

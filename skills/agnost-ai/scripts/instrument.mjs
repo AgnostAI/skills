@@ -81,24 +81,19 @@ if (framework === "mcp-ts") {
   result.warnings.push("mcp-py dependency/env added; wire agnost-mcp into the MCP server startup per docs");
 } else if (framework === "vercel-ai") {
   if (patchVercelAiTelemetry()) {
-    setupOtelTypeScript({
-      "@opentelemetry/sdk-node": "^0.52.1",
-      "@opentelemetry/exporter-trace-otlp-proto": "^0.52.1",
-    });
+    setupVercelAiOtel();
     result.appTelemetryReady = patchVercelNextStartup();
-    result.warnings.push("Vercel AI telemetry enabled; add userId/sessionId metadata inside experimental_telemetry when available");
+    result.warnings.push(
+      isVercelAi7()
+        ? "Vercel AI telemetry enabled; pass userId/sessionId in runtimeContext and explicitly allow them in telemetry.includeRuntimeContext"
+        : "Vercel AI telemetry enabled; add userId/sessionId metadata inside experimental_telemetry when available"
+    );
   } else if (hasLegacyOpenAiStream()) {
-    setupOtelTypeScript({
-      "@opentelemetry/sdk-node": "^0.52.1",
-      "@opentelemetry/exporter-trace-otlp-proto": "^0.52.1",
-    });
+    setupVercelAiOtel();
     patchVercelNextStartup();
     result.warnings.push("legacy Vercel AI OpenAIStream detected; no source rewrite was applied. The setup event will reach Agnost, but app telemetry requires migrating to generateText/streamText/generateObject or manual SDK instrumentation");
   } else {
-    setupOtelTypeScript({
-      "@opentelemetry/sdk-node": "^0.52.1",
-      "@opentelemetry/exporter-trace-otlp-proto": "^0.52.1",
-    });
+    setupVercelAiOtel();
     patchVercelNextStartup();
     result.warnings.push("vercel-ai dependency/env added; no uninstrumented generateText/streamText/generateObject call found");
   }
@@ -119,8 +114,8 @@ if (framework === "mcp-ts") {
   setupOtelTypeScript({
     "@arizeai/openinference-instrumentation-openai": openInferenceOpenAiVersion(),
     "@arizeai/openinference-core": "latest",
-    "@opentelemetry/sdk-node": "^0.52.1",
-    "@opentelemetry/exporter-trace-otlp-proto": "^0.52.1",
+    "@opentelemetry/sdk-node": "^0.300.0",
+    "@opentelemetry/exporter-trace-otlp-proto": "^0.300.0",
     "@opentelemetry/api": "^1.9.0",
   });
   result.warnings.push("openai-ts dependency/env added; initialize OpenInference before importing openai and pass user/session context per docs");
@@ -135,23 +130,20 @@ if (framework === "mcp-ts") {
   setupOtelTypeScript({
     "@mastra/observability": "latest",
     "@mastra/otel-exporter": "latest",
+    "@opentelemetry/exporter-trace-otlp-proto": "^0.300.0",
   });
   result.appTelemetryReady = patchMastraObservability();
 } else if (framework === "spectrum-ts") {
-  setupOtelTypeScript({
-    "@opentelemetry/sdk-node": "^0.52.1",
-    "@opentelemetry/exporter-trace-otlp-proto": "^0.52.1",
-    "@opentelemetry/api": "^1.9.0",
-  });
+  configureOtelEnv();
   noteSpectrumTelemetry();
-  result.warnings.push("spectrum-ts OTel deps/env added; wrap the Spectrum message loop with the app-level span recipe so Agnost receives AI telemetry");
+  result.warnings.push("Spectrum native telemetry enabled; add an app-level turn span only when Chat View needs transcript input/output");
 } else if (framework === "langchain-ts") {
   setupOtelTypeScript({
     langsmith: "latest",
     "@opentelemetry/api": "^1.9.0",
-    "@opentelemetry/context-async-hooks": "^1.30.1",
-    "@opentelemetry/sdk-trace-base": "^1.30.1",
-    "@opentelemetry/exporter-trace-otlp-proto": "^0.57.2",
+    "@opentelemetry/context-async-hooks": "^2.12.0",
+    "@opentelemetry/sdk-trace-base": "^2.12.0",
+    "@opentelemetry/exporter-trace-otlp-proto": "^0.300.0",
   });
   configureLangSmithTypeScriptEnv();
   result.warnings.push("langchain-ts dependency/env added; LangSmith OTel startup wiring remains a recipe step");
@@ -481,7 +473,7 @@ function packageDependencyMap(pkg) {
 function openInferenceOpenAiVersion() {
   const version = packageDependencyVersion("openai");
   if (/(^|[<>=~^ ])(?:4|5)(?:[.\s<>=~^]|$)/.test(version)) return "~2.3.1";
-  if (/(^|[<>=~^ ])6(?:[.\s<>=~^]|$)/.test(version) || version === "latest" || version === "*" || version === "") return "^4.0.0";
+  if (/(^|[<>=~^ ])(?:6|7)(?:[.\s<>=~^]|$)/.test(version) || version === "latest" || version === "*" || version === "") return "^4.4.2";
   result.warnings.push(`could not infer OpenInference/OpenAI compatibility from openai ${version}; using latest`);
   return "latest";
 }
@@ -489,6 +481,15 @@ function openInferenceOpenAiVersion() {
 function setupOtelTypeScript(deps) {
   addPackageDependencies(deps);
   configureOtelEnv();
+}
+
+function setupVercelAiOtel() {
+  const deps = {
+    "@opentelemetry/sdk-node": "^0.300.0",
+    "@opentelemetry/exporter-trace-otlp-proto": "^0.300.0",
+  };
+  if (isVercelAi7()) deps["@ai-sdk/otel"] = "^1.0.155";
+  setupOtelTypeScript(deps);
 }
 
 function setupOtelPython(reqs) {
@@ -518,9 +519,8 @@ function configureLangSmithTypeScriptEnv() {
 
 function configureLangSmithPythonEnv() {
   configureEnv({
-    LANGSMITH_OTEL_ENABLED: "true",
     LANGSMITH_TRACING: "true",
-    LANGSMITH_OTEL_ONLY: "true",
+    LANGSMITH_TRACING_MODE: "otel",
   });
 }
 
@@ -528,9 +528,17 @@ function patchVercelAiTelemetry() {
   return patchKnownCallOption({
     label: "Vercel AI",
     callRe: /\b(?:generateText|streamText|generateObject)\s*\(\s*\{/g,
-    optionName: "experimental_telemetry",
-    optionText: "experimental_telemetry: { isEnabled: true },",
+    optionName: isVercelAi7() ? "telemetry" : "experimental_telemetry",
+    optionText: isVercelAi7()
+      ? "telemetry: { isEnabled: true },"
+      : "experimental_telemetry: { isEnabled: true },",
   });
+}
+
+function isVercelAi7() {
+  const version = packageDependencyVersion("ai");
+  const major = Number(version.match(/\d+/)?.[0]);
+  return Number.isFinite(major) ? major >= 7 : ["", "*", "latest"].includes(version);
 }
 
 function hasLegacyOpenAiStream() {
@@ -573,6 +581,10 @@ function patchVercelNextStartup() {
       headers: { "X-Agnost-Org-ID": process.env.AGNOST_ORG_ID || "" },
     }),
   }).start();
+
+  ${isVercelAi7() ? `const { registerTelemetry } = await import("ai");
+  const { OpenTelemetry } = await import("@ai-sdk/otel");
+  registerTelemetry(new OpenTelemetry({ runtimeContext: true }));` : ""}
 }
 `);
   changed(path);
@@ -592,7 +604,8 @@ function noteSpectrumTelemetry() {
     result.warnings.push("spectrum-ts dependency/env added; no Spectrum({...}) startup call found");
   }
   if (hasNativeTelemetryFlag) {
-    result.warnings.push("Spectrum native telemetry is not an Agnost OTLP route in current spectrum-ts; keep the app-level OTel span recipe for Agnost");
+    result.appTelemetryReady = true;
+    result.warnings.push("Spectrum native telemetry exports lifecycle and provider metadata to Agnost but intentionally omits raw transcript text");
   }
 }
 

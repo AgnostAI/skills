@@ -105,7 +105,7 @@ function nodeOtelRoute(deps) {
     return rec("langchain-ts", "node", "otel", "LangChain JS/TS via LangSmith OTel mode → Agnost collector");
   }
   if (has(deps, "ai", "@ai-sdk/openai", "@ai-sdk/anthropic", "@ai-sdk/provider")) {
-    return rec("vercel-ai", "node", "otel", "Vercel AI SDK (experimental_telemetry → OTLP → Agnost collector)");
+    return rec("vercel-ai", "node", "otel", "Vercel AI SDK telemetry → OTLP → Agnost collector");
   }
   if (has(deps, "openai", "@openai/agents")) {
     return rec("openai-ts", "node", "otel", "OpenAI SDK via OpenInference OTel → Agnost collector");
