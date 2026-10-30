@@ -38,6 +38,10 @@ Inspect existing telemetry before choosing an integration:
 - Retell does not expose a documented OTLP export. For Retell agents, configure
   the `call_analyzed` webhook route in `references/frameworks.md`; do not use
   Live Monitoring, Analytics, or `transcript_updated` as a trace substitute.
+- AgentPhone does not expose an OTLP export. For hosted-mode AgentPhone agents,
+  configure the `agent.call_ended` per-agent webhook route in
+  `references/frameworks.md`. Webhook-mode agents need their webhook to answer
+  callers, so never point that webhook at Agnost.
 - Treat automatic OTel detection as a candidate, not proof. Inspect or trigger
   one real interaction and validate the resulting trace with the checklist
   below before declaring that route usable.
@@ -152,6 +156,7 @@ Voice-agent routes:
 
 - `#livekit-agents-native-otlp`
 - `#retell-call-analyzed-webhook`
+- `#agentphone-call-ended-webhook`
 
 For `vercel-ai`, read `references/frameworks.md#vercel-ai-otlp` before editing.
 For AI SDK 7, use `@ai-sdk/otel`, register its `OpenTelemetry` integration once,
@@ -178,6 +183,11 @@ For Retell, read `references/frameworks.md#retell-call-analyzed-webhook`.
 Configure the direct Agnost webhook URL with the real organization UUID and
 enable `call_analyzed`. Do not add an OTel exporter or ingest incremental
 `transcript_updated` events.
+
+For AgentPhone, read `references/frameworks.md#agentphone-call-ended-webhook`.
+Use it only for agents with `voiceMode: "hosted"`. Set the agent's own webhook
+to the direct Agnost URL with the real organization UUID; do not replace a
+webhook that answers live voice turns or SMS.
 
 ## Backfill existing data
 

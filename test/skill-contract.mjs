@@ -82,3 +82,17 @@ test("conversation recipes fail clearly when SDK initialization did not produce 
   assert.match(pythonRecipe, /if interaction is None:/);
   assert.match(pythonRecipe, /Agnost is not initialized/);
 });
+
+test("AgentPhone uses the hosted-agent call_ended webhook instead of OTLP", () => {
+  const agentphoneReference = frameworks.match(
+    /## agentphone: agent\.call_ended webhook[\s\S]*?(?=\n## )/,
+  )?.[0];
+
+  assert.ok(agentphoneReference, "missing AgentPhone webhook reference section");
+  assert.match(skill, /AgentPhone does not expose an OTLP export/);
+  assert.match(skill, /`voiceMode: "hosted"`/);
+  assert.match(agentphoneReference, /\/v1\/agents\/<agent-id>\/webhook/);
+  assert.match(agentphoneReference, /\/api\/voice\/v1\/webhooks\/agentphone\?org_id=/);
+  assert.match(agentphoneReference, /never point that webhook at Agnost/);
+  assert.match(readme, /\| AgentPhone \(hosted voice mode\) \| `agent\.call_ended` per-agent webhook/);
+});

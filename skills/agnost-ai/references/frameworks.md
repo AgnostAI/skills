@@ -15,6 +15,7 @@ Agnost SDK/MCP wrapper or the narrowest framework recipe that closes the gap.
 - [vercel-ai: OTLP](#vercel-ai-otlp)
 - [livekit agents: native OTLP](#livekit-agents-native-otlp)
 - [retell: call_analyzed webhook](#retell-call-analyzed-webhook)
+- [agentphone: agent.call_ended webhook](#agentphone-call-ended-webhook)
 - [openai: OpenInference OTLP](#openai-openinference-otlp)
 - [mastra: OTLP](#mastra-otlp)
 - [spectrum-ts: app-level OTel spans](#spectrum-ts-app-level-otel-spans)
@@ -126,6 +127,34 @@ log the Retell call `access_token`.
 
 Retell signature verification requires the organization's Retell webhook key.
 The direct Agnost endpoint does not verify `X-Retell-Signature`; treat its URL
+as sensitive until per-organization signature verification is available.
+
+## agentphone: agent.call_ended webhook
+
+Official Agnost guide: https://docs.agnost.ai/agentphone
+
+AgentPhone does not expose an OTLP export. For an agent whose `voiceMode` is
+`hosted`, set the agent's own webhook (not the project webhook, unless every
+agent is hosted) to the Agnost voice endpoint:
+
+```bash
+curl -X POST "https://api.agentphone.ai/v1/agents/<agent-id>/webhook" \
+  -H "Authorization: Bearer $AGENTPHONE_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://api.agnost.ai/api/voice/v1/webhooks/agentphone?org_id=<org-id-from-dashboard>&agent_name=<url-encoded-name>"}'
+```
+
+Agnost captures `agent.call_ended` only: the final transcript, summary, user
+sentiment, call success, status, and timing. It acknowledges messages,
+reactions, number releases, and test events without capturing them, and it
+rejects live voice turns with `422`. A webhook-mode agent needs its webhook to
+answer every caller turn and SMS, so never point that webhook at Agnost.
+
+The caller number becomes the user ID. AgentPhone sends no per-turn
+timestamps, tool calls, or cost, so Agnost estimates turn timing and records no
+tool or cost data. `agent.call_ended` is delivered once without retry.
+
+The direct Agnost endpoint does not verify `X-Webhook-Signature`; treat its URL
 as sensitive until per-organization signature verification is available.
 
 ## conversation-ts: agnostai

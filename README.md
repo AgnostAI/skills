@@ -65,6 +65,7 @@ attribute, or metadata gaps. Otherwise use the matching SDK/MCP route below.
 | --- | --- |
 | LiveKit Agents (Python or TypeScript) | Native LiveKit traces through a standard OTel batch exporter |
 | Retell | `call_analyzed` webhook to the Agnost voice endpoint |
+| AgentPhone (hosted voice mode) | `agent.call_ended` per-agent webhook to the Agnost voice endpoint |
 
 When a TypeScript package contains MCP code and regular app/agent/model code,
 preserve its supported existing OTel path or use the TypeScript conversation
